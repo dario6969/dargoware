@@ -318,7 +318,7 @@ local miscSection = mainTab:AddSection({ Text = 'Misc' }); do
         end
     end})
 
-    miscSection:AddButton({ Text = 'Meditatation State', Flag = 'Meditate', Callback = function()
+    miscSection:AddButton({ Text = 'Meditation State', Flag = 'Meditate', Callback = function()
         utils.meditationCheck()
     end})
 end
