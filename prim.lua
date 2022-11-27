@@ -11,7 +11,7 @@ local player = game:GetService('Players').LocalPlayer
 local client = {}; do
     local function characterAdded(character)
         if not character then
-            return print('dog')
+            return
         end
 
         local function died()
@@ -53,6 +53,15 @@ local client = {}; do
 
     characterAdded(player.Character)
     player.CharacterAdded:Connect(characterAdded)
+end
+
+if not shared.Part then
+    local part = Instance.new('Part')
+    part.Size = Vector3.new(100, 1, 100)
+    part.Anchored = true
+    part.Position = Vector3.new(-4634.93262, 969.183044, 15047.5166)
+    part.Parent = workspace
+    shared.Part = part
 end
 
 local utils = {}; do
@@ -169,15 +178,6 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
             autofarmSection.components.Foodfarm:SetValue(false)
         end
 
-        if not shared.Part then
-            local part = Instance.new('Part')
-            part.Size = Vector3.new(100, 1, 100)
-            part.Anchored = true
-            part.Position = Vector3.new(-4634.93262, 969.183044, 15047.5166)
-            part.Parent = workspace
-            shared.Part = part
-        end
-
         local noStunCon
 
         local stuns = {
@@ -288,15 +288,6 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
             autofarmSection.components.Autofarm:SetValue(false)
         end
 
-        if not shared.Part then
-            local part = Instance.new('Part')
-            part.Size = Vector3.new(100, 1, 100)
-            part.Anchored = true
-            part.Position = Vector3.new(-4634.93262, 969.183044, 15047.5166)
-            part.Parent = workspace
-            shared.Part = part
-        end
-
         local noStunCon
 
         local stuns = {
@@ -369,6 +360,15 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
 
             task.wait()
         end
+
+        if client.character then
+            client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
+        end
+
+        if noStunCon then
+            noStunCon:Disconnect()
+            noStunCon = nil
+        end
     end
 
     autofarmSection:AddToggle({ Text = 'Food Autofarm', Flag = 'Foodfarm' }).Changed:Connect(function(value)
@@ -440,6 +440,12 @@ local miscSection = mainTab:AddSection({ Text = 'Misc' }); do
 
     miscSection:AddButton({ Text = 'Meditation State', Flag = 'Meditate', Callback = function()
         utils.meditationCheck()
+    end})
+
+    miscSection:AddButton({ Text = 'TP to safe part', Flag = 'Part', Callback = function()
+        if client.character then
+            client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 6, 0))
+        end
     end})
 end
 
