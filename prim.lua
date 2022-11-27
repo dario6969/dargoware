@@ -114,6 +114,18 @@ local utils = {}; do
         end
     end
 
+    function utils.getFood()
+        for _, food in next, workspace.Food:GetChildren() do
+            if food:IsA('BasePart') and not (food:FindFirstChild('GettingAte') or food:FindFirstChild('Ate')) then
+                if food:FindFirstChild('Died') and food.Died.Value ~= client.character.Name then
+                    if not utils.isPlayerNear(food.Position) then
+                        return food
+                    end
+                end
+            end
+        end
+    end
+
     function utils.meditationCheck()
         local state = game.ReplicatedStorage.Remotes.GetMeditationState:InvokeServer()
 
@@ -151,6 +163,10 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
             if not Library.Flags.Autofarm then
                 return
             end
+        end
+
+        if Library.Flags.Foodfarm then
+            autofarmSection.components.Foodfarm:SetValue(false)
         end
 
         if not shared.Part then
@@ -230,10 +246,10 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
                             utils.meditationCheck()
                         end
                     end
-                end
-
-                if client.character then
-                    client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
+                else
+                    if client.character then
+                        client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
+                    end
                 end
             end
 
@@ -242,6 +258,10 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
             end
 
             task.wait()
+        end
+
+        if client.character then
+            client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
         end
 
         if noStunCon then
@@ -253,6 +273,107 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
     autofarmSection:AddToggle({ Text = 'Autofarm', Flag = 'Autofarm' }).Changed:Connect(function(value)
         if value then
             runAutofarm()
+        end
+    end)
+
+    local function runFoodFarm()
+        while not client.character do
+            task.wait()
+            if not Library.Flags.Foodfarm then
+                return
+            end
+        end
+
+        if Library.Flags.Autofarm then
+            autofarmSection.components.Autofarm:SetValue(false)
+        end
+
+        if not shared.Part then
+            local part = Instance.new('Part')
+            part.Size = Vector3.new(100, 1, 100)
+            part.Anchored = true
+            part.Position = Vector3.new(-4634.93262, 969.183044, 15047.5166)
+            part.Parent = workspace
+            shared.Part = part
+        end
+
+        local noStunCon
+
+        local stuns = {
+            ['CANTM1'] = true,
+            ['CANTM2'] = true,
+            ['Action'] = true,
+            ['Attacking'] = true,
+            ['Stunned'] = true,
+            ['NoAttack'] = true,
+        };
+
+        noStunCon = client.character.ChildAdded:Connect(function(child)
+            if stuns[child.Name] then
+                task.wait()
+                child:Destroy()
+            end
+        end)
+
+        local eating = 0
+
+        while Library.Flags.Foodfarm do
+            if client.character then
+                if utils.healthCheck() then
+                    return
+                end
+
+                local food = utils.getFood()
+
+                if food then
+                    local waited = 0
+
+                    repeat
+                        client.character:SetPrimaryPartCFrame(CFrame.new(food.Position + Vector3.new(0, -15, 0)))
+
+                        waited += task.wait()
+
+                        client.root.Velocity = Vector3.new(0, 0, 0)
+
+                        if waited >= 0.5 or (food and utils.isPlayerNear(food.Position)) then
+                            waited = 999
+                            break
+                        end
+                        
+                        client.remote:FireServer('StartEat')
+                    until not (food and not food:FindFirstChild('GettingAte'))
+
+                    if waited < 0.5 then
+                        eating += 1
+
+                        task.spawn(function()
+                            while (food and food:FindFirstChild('GettingAte') and not food:FindFirstChild('Ate')) do
+                                task.wait()
+                            end
+
+                            eating -= 1
+                        end)
+
+                        task.wait(0.1)
+                    end
+                else
+                    if client.character then
+                        client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
+                    end
+                end
+
+                if eating <= 0 then
+                    client.remote:FireServer('EndEat')
+                end
+            end
+
+            task.wait()
+        end
+    end
+
+    autofarmSection:AddToggle({ Text = 'Food Autofarm', Flag = 'Foodfarm' }).Changed:Connect(function(value)
+        if value then
+            runFoodFarm()
         end
     end)
 
@@ -273,7 +394,6 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
 
     autofarmSection:AddSlider({ Text = 'Safety Distance', Flag = 'SafetyDistance', Value = 700, Min = 100, Max = 1000 })
     autofarmSection:AddSlider({ Text = 'Reset At Health Percentage', Flag = 'HealthPercentage', Value = 25, Min = 1, Max = 75})
-
     autofarmSection:AddToggle({ Text = 'Get Meditation State After Kill', Flag = 'MeditationState' })
 end
 
