@@ -145,10 +145,16 @@ local utils = {}; do
         })
     end
 
+    function utils.tpToSafePart()
+        if client.character then
+            client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 5, 0))
+        end
+    end
+
     function utils.healthCheck()
         if client.character and client.humanoid and Library.Flags.HealthPercentage and (client.humanoid.Health / client.humanoid.MaxHealth) * 100 < Library.Flags.HealthPercentage then
             while Library.Flags.Autofarm and client.character do
-                client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
+                utils.tpToSafePart()
 
                 task.wait(0.1)
 
@@ -224,11 +230,12 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
                             client.tool.Parent = client.character
                         end
 
-                        if humanoid.Sit then
-                            humanoid.Sit = false
+                        if client.humanoid and client.humanoid.Sit then
+                            client.humanoid.Sit = false
                         end
 
                         client.remote:FireServer('LeftClick')
+                        client.remote:FireServer('RightClick')
 
                         task.wait()
 
@@ -247,9 +254,7 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
                         end
                     end
                 else
-                    if client.character then
-                        client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
-                    end
+                    utils.tpToSafePart()
                 end
             end
 
@@ -260,9 +265,7 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
             task.wait()
         end
 
-        if client.character then
-            client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
-        end
+        utils.tpToSafePart()
 
         if noStunCon then
             noStunCon:Disconnect()
@@ -282,6 +285,11 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
             if not Library.Flags.Foodfarm then
                 return
             end
+        end
+
+        if not client.character:FindFirstChild('Hollow') then
+            autofarmSection.components.Foodfarm:SetValue(false)
+            return
         end
 
         if Library.Flags.Autofarm then
@@ -348,9 +356,11 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
                         task.wait(0.1)
                     end
                 else
-                    if client.character then
-                        client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
-                    end
+                    utils.tpToSafePart()
+                end
+
+                if client.humanoid and client.humanoid.Sit then
+                    client.humanoid.Sit = false
                 end
 
                 if eating <= 0 then
@@ -361,9 +371,7 @@ local autofarmSection = mainTab:AddSection({ Text = 'Autofarm' }); do
             task.wait()
         end
 
-        if client.character then
-            client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 3.25, 0))
-        end
+        utils.tpToSafePart()
 
         if noStunCon then
             noStunCon:Disconnect()
@@ -442,10 +450,8 @@ local miscSection = mainTab:AddSection({ Text = 'Misc' }); do
         utils.meditationCheck()
     end})
 
-    miscSection:AddButton({ Text = 'TP to safe part', Flag = 'Part', Callback = function()
-        if client.character then
-            client.character:SetPrimaryPartCFrame(shared.Part.CFrame * CFrame.new(0, 6, 0))
-        end
+    miscSection:AddButton({ Text = 'TP To Safe Part', Flag = 'Part', Callback = function()
+        utils.tpToSafePart()
     end})
 end
 
